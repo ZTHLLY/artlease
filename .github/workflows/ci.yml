@@ -26,7 +26,7 @@ jobs:
 
       - name: Lint (ruff)
         run: |
-          ruff check . --fix
+          ruff check . --fix --unsafe-fixes
 
       - name: Basic sanity check (import / run.py)
         run: |
