@@ -183,11 +183,14 @@ class RegisterForm(FlaskForm):
         if self.account_type.data == "vendor":
             errors = False
             if not self.artisticName.data:
-                self.artisticName.errors.append("Required for vendors."); errors = True
+                self.artisticName.errors.append("Required for vendors.")
+                errors = True
             if not self.bio.data:
-                self.bio.errors.append("Required for vendors."); errors = True
+                self.bio.errors.append("Required for vendors.")
+                errors = True
             if not self.profilePictureLink.data:
-                self.profilePictureLink.errors.append("Required for vendors."); errors = True
+                self.profilePictureLink.errors.append("Required for vendors.")
+                errors = True
             if errors:
                 return False
         return True
