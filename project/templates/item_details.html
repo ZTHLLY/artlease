@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% set active_page = 'vendor_gallery' %}
+{% block title %}Item — {{ item.title if item else 'Details' }}{% endblock %}
+
+{% block content %}
+<h1 class="visually-hidden">Item Details</h1>
+<section class="container">
+  <div class="row g-4 mx-auto">
+    <div class="col-12 col-md-8 col-xl-6">
+      <img src="{{ url_for('static', filename= item.image) }}" alt="Large preview of the selected image"
+        class="img-fluid rounded">
+    </div>
+
+    <div class="col-12 col-md-4">
+      <h2 class="colour__header">{{ item.title }}</h2>
+      <p class="text-muted mb-2">By
+        <a class="vendor__details" href="{{ url_for('main.vendor_gallery', vendor_id = vendor.vendor_id) }}">{{
+          vendor.artisticName }}</a>
+      </p>
+      <p class="text-muted mb-2">Category:
+        <a class="vendor__details" href="{{ url_for('main.category_items', category_id=item.category_id) }}">
+          {{ category.categoryName if category else item.category_id }}</a>
+
+      </p>
+
+      <p>{{ item.itemDescription or 'No description.' }}</p>
+
+      <div class="card mt-3">
+        <form class="container mx-auto" method="post"
+          action="{{ url_for('main.item_details', artwork_id=item.artwork_id) }}">
+          {{ form.hidden_tag() if form is defined }}
+          <div class="mb-3">
+            <div class="col-12 col-sm-auto col-form-label colour__display fw-bold">Duration</div>
+            {% for subfield in form.durationPreset %}
+              {% if loop.first %}
+              <div class="form-check mt-2">
+                {{ subfield(class="form-check-input", id=subfield.id) }}
+                <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
+              </div>
+              {% else %}
+              <div class="row g-2 align-items-center mt-2">
+                <div class="col-12 col-sm-auto">
+                  <div class="form-check m-0">
+                    {{ subfield(class="form-check-input", id=subfield.id) }}
+                    <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-4">
+                  {{ form.weeks(class="form-control w-100", id="weeks") }}
+                </div>
+              </div>
+              {% endif %}
+            {% endfor %}
+            {% if form.durationPreset.errors %}
+            <div class="text-danger small mt-1">
+              {% for error in form.durationPreset.errors %}
+              <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if form.weeks.errors %}
+            <div class="text-danger small mt-1">
+              {% for error in form.weeks.errors %}
+              <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="row g-2 align-items-center mb-3 mt-2">
+              <label for="qty" class="col-12 col-sm-auto fw-bold colour__display col-form-label">Quantity</label>
+              <div class="col-12 col-sm-auto">
+                {{ form.quantity(class="form-control", id="qty") }}
+              </div>
+            </div>
+            {% if form.quantity.errors %}
+            <div class="text-danger small mt-1">
+              {% for error in form.quantity.errors %}
+              <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="row g-2 align-items-center mb-3">
+              <label for="inputPostcode" class="col-12 col-sm-auto fw-bold colour__display col-form-label">Delivery
+                Postcode</label>
+              <div class="col-12 col-sm-auto">
+                {{ form.postcode(class="form-control", id="inputPostcode") }}
+              </div>
+            </div>
+            {% if form.postcode.errors %}
+            <div class="text-danger small mt-1">
+              {% for error in form.postcode.errors %}
+              <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <p class="fs-4 fw-semibold mb-3" id="price">AUD {{ '%.2f'|format(item.pricePerWeek) }}</p>
+
+            <div class="d-flex flex-wrap my-2 gap-2">
+              <button type="submit" class="btn colour__button__2">Add to cart <i class="bi bi-cart"></i></button>
+              <a class="btn colour__button" href="{{ url_for('main.checkout') }}">Go to checkout</a>
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

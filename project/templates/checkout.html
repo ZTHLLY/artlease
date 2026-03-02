@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+{% set active_page = 'checkout' %}
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<h1 class="visually-hidden">Checkout</h1>
+<h2 class="my-3 mb-xl-5 colour__header fw-bold">Checkout</h2>
+
+<section aria-label="Cart" class="mb-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th scope="col" class="col-1">Item</th>
+          <th scope="col">Category</th>
+          <th scope="col">Lease Period</th>
+          <th scope="col">Qty</th>
+          <th scope="col">Price (per week)</th>
+          <th scope="col">Line Total</th>
+          <th scope="col" class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set subtotal = 0 %}
+        {% for li in cart.items %}
+        {% set weeks = li.rentalDuration or 1 %}
+        {% set price = li.artwork.pricePerWeek %}
+        {% set line_total = (weeks * li.quantity * price) %}
+        {% set subtotal = subtotal + line_total %}
+        <tr>
+          <td>
+            <div class="d-flex row align-items-center gap-2">
+              <img src="{{url_for('static', filename= li.artwork.image) }}" alt="" class="img-fluid rounded"
+                style="max-width:72px">
+              <span class="align-items-center fw-bold">{{ li.artwork.title }}</span>
+            </div>
+          </td>
+          <td>{{ li.artwork.categoryName or "—" }}</td>
+          <td>{{ weeks }} week(s)</td>
+          <td>
+            <form action="{{ url_for('main.cart_update', item_id=li.cartItem_id) }}" method="post"
+              class="d-inline cart-qty-form">
+              {% if csrf_token %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+              <input type="hidden" name="next" value="{{ url_for('main.checkout') }}">
+              <div class="input-group input-group-sm quantity-stepper" style="width: 130px;">
+                <button class="btn btn-outline-secondary qty-decrease" name="direction" value="decrease"
+                  type="submit" aria-label="Decrease quantity" {% if li.quantity <= 1 %}disabled{% endif %}>
+                  <i class="bi bi-dash"></i>
+                </button>
+                <input type="number" name="quantity" value="{{ li.quantity }}" min="1" max="99"
+                  class="form-control text-center qty-input" inputmode="numeric" aria-label="Quantity">
+                <button class="btn btn-outline-secondary qty-increase" name="direction" value="increase"
+                  type="submit" aria-label="Increase quantity">
+                  <i class="bi bi-plus"></i>
+                </button>
+              </div>
+            </form>
+          </td>
+          <td>AUD {{ '%.2f'|format(price) }}</td>
+          <td>AUD {{ '%.2f'|format(line_total) }}</td>
+          <td class="text-end">
+
+
+            <a href="{{ url_for('main.cart') }}" class="btn btn-outline-secondary btn-sm mb-1">Edit</a>
+            <form method="post" action="{{ url_for('main.cart_remove', item_id=li.cartItem_id) }}">
+              {% if csrf_token %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+              <input type="hidden" name="next" value="{{ url_for('main.checkout') }}">
+              <button class="btn btn-outline-danger btn-sm mb-1">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted">Your cart is empty.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if cart.items %}
+<div class="d-flex justify-content-end mt-2 mb-3">
+  <form action="{{ url_for('main.cart_clear') }}" method="post" class="m-0">
+    {% if csrf_token %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+    <button type="submit" class="btn btn-secondary">Clear basket</button>
+  </form>
+</div>
+{% endif %}
+
+<section>
+  <div class="row g-4">
+    <div class="col-12 col-md-7">
+      <div class="card">
+        <div class="card-body">
+          <form aria-label="Billing details" method="post" action="{{ url_for('main.checkout') }}">
+            {{ form.csrf_token }}
+            <h2 class="h4 colour__header fw-bold">Billing details</h2>
+
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label" for="{{ form.firstname.id }}">First Name</label>
+                {{ form.firstname(class_="form-control", required=True) }}
+                {% for e in form.firstname.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="{{ form.surname.id }}">Surname</label>
+                {{ form.surname(class_="form-control", required=True) }}
+                {% for e in form.surname.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-8">
+                <label class="form-label" for="{{ form.email.id }}">Email</label>
+                {{ form.email(class_="form-control", required=True) }}
+                {% for e in form.email.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="{{ form.phone.id }}">Phone</label>
+                {{ form.phone(class_="form-control", required=True) }}
+                {% for e in form.phone.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+            </div>
+
+            <hr class="my-4" />
+
+            {# DELIVERY (REQUIRED) #}
+            <h2 class="h5 colour__header fw-bold mb-2">Delivery address</h2>
+            <div class="row g-3">
+              <div class="col-sm-4">
+                <label class="form-label" for="{{ form.del_streetNumber.id }}">Street number</label>
+                {{ form.del_streetNumber(class_="form-control", required=True) }}
+                {% for e in form.del_streetNumber.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor
+                %}
+              </div>
+              <div class="col-sm-8">
+                <label class="form-label" for="{{ form.del_streetName.id }}">Street name</label>
+                {{ form.del_streetName(class_="form-control", required=True) }}
+                {% for e in form.del_streetName.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.del_city.id }}">City</label>
+                {{ form.del_city(class_="form-control", required=True) }}
+                {% for e in form.del_city.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="{{ form.del_state.id }}">State</label>
+                {{ form.del_state(class_="form-control", required=True) }}
+                {% for e in form.del_state.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="{{ form.del_postcode.id }}">Postcode</label>
+                {{ form.del_postcode(class_="form-control", required=True) }}
+                {% for e in form.del_postcode.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.del_country.id }}">Country</label>
+                {{ form.del_country(class_="form-control", required=True) }}
+                {% for e in form.del_country.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+            </div>
+
+            <hr class="my-4 d-flex align-items-center" />
+
+            {# BILLING + COPY BUTTON (NO JS) #}
+            <div class="d-flex align-items-center justify-content-between">
+              <h2 class="h5 colour__header fw-bold mb-0">Billing address</h2>
+              {{ form.copy_delivery(class_="btn btn-outline-secondary btn-sm") }}
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-sm-4">
+                <label class="form-label" for="{{ form.bill_streetNumber.id }}">Street number</label>
+                {{ form.bill_streetNumber(class_="form-control") }}
+                {% for e in form.bill_streetNumber.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor
+                %}
+              </div>
+              <div class="col-sm-8">
+                <label class="form-label" for="{{ form.bill_streetName.id }}">Street name</label>
+                {{ form.bill_streetName(class_="form-control") }}
+                {% for e in form.bill_streetName.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor
+                %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.bill_city.id }}">City</label>
+                {{ form.bill_city(class_="form-control") }}
+                {% for e in form.bill_city.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="{{ form.bill_state.id }}">State</label>
+                {{ form.bill_state(class_="form-control") }}
+                {% for e in form.bill_state.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="{{ form.bill_postcode.id }}">Postcode</label>
+                {{ form.bill_postcode(class_="form-control") }}
+                {% for e in form.bill_postcode.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.bill_country.id }}">Country</label>
+                {{ form.bill_country(class_="form-control") }}
+                {% for e in form.bill_country.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+            </div>
+
+            <hr class="my-4" />
+
+            {# PAYMENT (unchanged UI) #}
+            <h2 class="h4 mt-2 colour__header fw-bold">Payment</h2>
+
+            {% set selected_payment = form.payment_method.data or form.payment_method.default or 'card' %}
+
+            <div class="col-12 payment-methods checkout-payment">
+              {% if form.payment_method.errors %}
+              <div class="invalid-feedback d-block mb-2">{{ form.payment_method.errors[0] }}</div>
+              {% endif %}
+              <div class="payment-option">
+                <input
+                  class="payment-option__control form-check-input"
+                  type="radio"
+                  id="payment-card"
+                  name="{{ form.payment_method.name }}"
+                  value="card"
+                  {% if selected_payment == 'card' %}checked{% endif %}
+                >
+                <label class="payment-option__label fw-semibold d-flex align-items-center gap-2 mb-1" for="payment-card">
+                  <i class="colour__icon2 bi bi-credit-card fs-5"></i>
+                  Credit / Debit Card
+                </label>
+                <p class="form-text mb-2">We accept Visa, Mastercard, and American Express.</p>
+                <div class="payment-option__panel payment-panel--card">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label" for="{{ form.card_name.id }}">Name on card</label>
+                      {{ form.card_name(class_="form-control") }}
+                      {% for e in form.card_name.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="{{ form.card_number.id }}">Card number</label>
+                      {{ form.card_number(class_="form-control", inputmode="numeric", placeholder="XXXX XXXX XXXX XXXX") }}
+                      {% for e in form.card_number.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                      <label class="form-label" for="{{ form.card_expiry.id }}">Expiry (MM/YY)</label>
+                      {{ form.card_expiry(class_="form-control", placeholder="MM/YY") }}
+                      {% for e in form.card_expiry.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                      <label class="form-label" for="{{ form.card_cvv.id }}">CVV</label>
+                      {{ form.card_cvv(class_="form-control", inputmode="numeric", placeholder="123") }}
+                      {% for e in form.card_cvv.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="payment-option">
+                <input
+                  class="payment-option__control form-check-input"
+                  type="radio"
+                  id="payment-paypal"
+                  name="{{ form.payment_method.name }}"
+                  value="paypal"
+                  {% if selected_payment == 'paypal' %}checked{% endif %}
+                >
+                <label class="payment-option__label fw-semibold d-flex align-items-center gap-2 mb-1" for="payment-paypal">
+                  <i class="colour__icon2 bi bi-paypal fs-5"></i>
+                  PayPal
+                </label>
+                <p class="form-text mb-2">Secure checkout powered by PayPal.</p>
+                <div class="payment-option__panel payment-panel--paypal">
+                  <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                      <label class="form-label" for="{{ form.paypal_email.id }}">PayPal email</label>
+                      {{ form.paypal_email(class_="form-control", placeholder="name@example.com") }}
+                      {% for e in form.paypal_email.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="payment-option">
+                <input
+                  class="payment-option__control form-check-input"
+                  type="radio"
+                  id="payment-wallet"
+                  name="{{ form.payment_method.name }}"
+                  value="wallet"
+                  {% if selected_payment == 'wallet' %}checked{% endif %}
+                >
+                <label class="payment-option__label fw-semibold d-flex align-items-center gap-2 mb-1" for="payment-wallet">
+                  <i class="colour__icon2 bi bi-wallet2 fs-5"></i>
+                  Digital Wallet
+                </label>
+                <p class="form-text mb-2">Enter the wallet details associated with your purchase.</p>
+                <div class="payment-option__panel payment-panel--wallet">
+                  <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                      <label class="form-label" for="{{ form.wallet_provider.id }}">Wallet provider</label>
+                      {{ form.wallet_provider(class_="form-control", placeholder="e.g. Apple Pay") }}
+                      {% for e in form.wallet_provider.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                      <label class="form-label" for="{{ form.wallet_reference.id }}">Wallet reference</label>
+                      {{ form.wallet_reference(class_="form-control", placeholder="Transaction ID or handle") }}
+                      {% for e in form.wallet_reference.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 mt-3 d-flex align-items-center gap-3">
+              {{ form.submit(class_="btn colour__button__2") }}
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+    {# Summary #}
+    <div class="col-12 col-md-5">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="h4 colour__header fw-bold mb-0">Summary</h2>
+
+          {# Delivery from view (delivery_cost) OR global function #}
+          {% set delivery = (delivery_cost if delivery_cost is defined else
+          (delivery_cost_from_session() if delivery_cost_from_session is defined else 0)) | float %}
+
+          {# Subtotal: sum of line items (pricePerWeek * weeks * qty), EXCLUDING delivery #}
+          {% set ns = namespace(subtotal=0.0) %}
+          {% for li in (cart.items or []) %}
+          {% set price = (li.artwork.pricePerWeek if li.artwork and li.artwork.pricePerWeek is not none else 0) | float
+          %}
+          {% set qty = (li.quantity if li.quantity is not none else 1) | int %}
+          {% set weeks = (li.rentalDuration if li.rentalDuration is not none else 1) | int %}
+          {% set ns.subtotal = ns.subtotal + (price * qty * weeks) %}
+          {% endfor %}
+
+          {# Tax = 10% of subtotal #}
+          {% set tax = ns.subtotal * 0.10 %}
+          {% set total = ns.subtotal + delivery + tax %}
+
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Subtotal <strong>AUD {{ '%.2f'|format(ns.subtotal) }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Delivery <strong>AUD {{ '%.2f'|format(delivery) }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Tax (10%) <strong>AUD {{ '%.2f'|format(tax) }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Total <strong class="fw-bold">AUD {{ '%.2f'|format(total) }}</strong>
+            </li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
