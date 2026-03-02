@@ -7,7 +7,7 @@ from flask import (
 
 from project.db import (
     get_categories, get_category, get_artwork,
-    get_orders, get_vendor, get_vendor_items, get_all_vendors,delete_artwork,
+    get_vendor, get_vendor_items, get_all_vendors,delete_artwork,
     filter_items, generate_kpi, publish_artwork, mysql
 )
 
@@ -605,29 +605,49 @@ def checkout():
         pf = session.get('checkout_prefill') or {}
         if pf:
             # contact
-            if pf.get('firstname'):        form.firstname.data        = pf['firstname']
-            if pf.get('surname'):          form.surname.data          = pf['surname']
-            if pf.get('email'):            form.email.data            = pf['email']
-            if pf.get('phone'):            form.phone.data            = pf['phone']
+            if pf.get('firstname'):
+                form.firstname.data = pf['firstname']
+            if pf.get('surname'):
+                form.surname.data = pf['surname']
+            if pf.get('email'):
+                form.email.data = pf['email']
+            if pf.get('phone'):
+                form.phone.data = pf['phone']
             # delivery
-            if pf.get('del_streetNumber'): form.del_streetNumber.data = pf['del_streetNumber']
-            if pf.get('del_streetName'):   form.del_streetName.data   = pf['del_streetName']
-            if pf.get('del_city'):         form.del_city.data         = pf['del_city']
-            if pf.get('del_state'):        form.del_state.data        = pf['del_state']
-            if pf.get('del_postcode'):     form.del_postcode.data     = pf['del_postcode']
-            if pf.get('del_country'):      form.del_country.data      = pf['del_country']
+            if pf.get('del_streetNumber'):
+                form.del_streetNumber.data = pf['del_streetNumber']
+            if pf.get('del_streetName'):
+                form.del_streetName.data = pf['del_streetName']
+            if pf.get('del_city'):
+                form.del_city.data = pf['del_city']
+            if pf.get('del_state'):
+                form.del_state.data = pf['del_state']
+            if pf.get('del_postcode'):
+                form.del_postcode.data = pf['del_postcode']
+            if pf.get('del_country'):
+                form.del_country.data = pf['del_country']
             # billing (optional to re-show)
-            if pf.get('bill_streetNumber'): form.bill_streetNumber.data = pf['bill_streetNumber']
-            if pf.get('bill_streetName'):   form.bill_streetName.data   = pf['bill_streetName']
-            if pf.get('bill_city'):         form.bill_city.data         = pf['bill_city']
-            if pf.get('bill_state'):        form.bill_state.data        = pf['bill_state']
-            if pf.get('bill_postcode'):     form.bill_postcode.data     = pf['bill_postcode']
-            if pf.get('bill_country'):      form.bill_country.data      = pf['bill_country']
+            if pf.get('bill_streetNumber'):
+                form.bill_streetNumber.data = pf['bill_streetNumber']
+            if pf.get('bill_streetName'):
+                form.bill_streetName.data = pf['bill_streetName']
+            if pf.get('bill_city'):
+                form.bill_city.data = pf['bill_city']
+            if pf.get('bill_state'):
+                form.bill_state.data = pf['bill_state']
+            if pf.get('bill_postcode'):
+                form.bill_postcode.data = pf['bill_postcode']
+            if pf.get('bill_country'):
+                form.bill_country.data = pf['bill_country']
             # payment preferences (non-sensitive)
-            if pf.get('payment_method'):    form.payment_method.data    = pf['payment_method']
-            if pf.get('paypal_email'):      form.paypal_email.data      = pf['paypal_email']
-            if pf.get('wallet_provider'):   form.wallet_provider.data   = pf['wallet_provider']
-            if pf.get('wallet_reference'):  form.wallet_reference.data  = pf['wallet_reference']
+            if pf.get('payment_method'):
+                form.payment_method.data = pf['payment_method']
+            if pf.get('paypal_email'):
+                form.paypal_email.data = pf['paypal_email']
+            if pf.get('wallet_provider'):
+                form.wallet_provider.data = pf['wallet_provider']
+            if pf.get('wallet_reference'):
+                form.wallet_reference.data = pf['wallet_reference']
 
         # 4) Apply postcode hint LAST so it overrides DB prefill (if present)
         pc_hint = (session.get('checkout_postcode') or '').strip()

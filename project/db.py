@@ -94,18 +94,24 @@ def filter_items(
     """
     params = []
     if category_id is not None:
-        sql += " AND a.category_id=%s"; params.append(category_id)
+        sql += " AND a.category_id=%s"
+        params.append(category_id)
     if vendor_id is not None:
-        sql += " AND a.vendor_id=%s"; params.append(vendor_id)
+        sql += " AND a.vendor_id=%s"
+        params.append(vendor_id)
     if min_price is not None:
-        sql += " AND a.pricePerWeek >= %s"; params.append(min_price)
+        sql += " AND a.pricePerWeek >= %s"
+        params.append(min_price)
     if max_price is not None:
-        sql += " AND a.pricePerWeek <= %s"; params.append(max_price)
+        sql += " AND a.pricePerWeek <= %s"
+        params.append(max_price)
     if availability:
-        sql += " AND a.availabilityStatus=%s"; params.append(availability)
+        sql += " AND a.availabilityStatus=%s"
+        params.append(availability)
     if q:
         like = f"%{q}%"
-        sql += " AND (a.title LIKE %s OR a.itemDescription LIKE %s OR c.categoryName LIKE %s OR v.artisticName LIKE %s)"; params.extend([like, like, like, like])
+        sql += " AND (a.title LIKE %s OR a.itemDescription LIKE %s OR c.categoryName LIKE %s OR v.artisticName LIKE %s)"
+        params.extend([like, like, like, like])
     order_by = "a.artwork_id DESC"
     sort_map = {
         "latest": "a.artwork_id DESC",
@@ -118,9 +124,12 @@ def filter_items(
         order_by = sort_map[sort]
     sql += f" ORDER BY {order_by}"
     if limit:
-        sql += " LIMIT %s"; params.append(limit)
-    cur = mysql.connection.cursor(); cur.execute(sql, tuple(params))
-    rows = cur.fetchall(); cur.close()
+        sql += " LIMIT %s"
+        params.append(limit)
+    cur = mysql.connection.cursor()
+    cur.execute(sql, tuple(params))
+    rows = cur.fetchall()
+    cur.close()
     return rows
     
 def get_vendor(vendor_id: int) -> Optional[Vendor]:
@@ -245,7 +254,8 @@ def check_for_user_with_role(credential: str, password_plain: str, role_hint: st
             FROM customers
             WHERE email=%s AND customer_password=%s
         """, (credential, pwd))
-        row = cur.fetchone(); cur.close()
+        row = cur.fetchone()
+        cur.close()
         if row:
             return "customer", {"id": row["id"], "firstname": row["firstName"], "surname": row["lastName"],
                                 "email": row["email"], "phone": row["phone"]}
@@ -258,7 +268,8 @@ def check_for_user_with_role(credential: str, password_plain: str, role_hint: st
             FROM vendors
             WHERE email=%s AND vendor_password=%s
         """, (credential, pwd))
-        row = cur.fetchone(); cur.close()
+        row = cur.fetchone()
+        cur.close()
         if row:
             return "vendor", {"id": row["id"], "firstname": row["firstName"], "surname": row["lastName"],
                               "email": row["email"], "phone": row["phone"]}
@@ -281,7 +292,8 @@ def check_for_user_with_role(credential: str, password_plain: str, role_hint: st
         FROM vendors
         WHERE email=%s AND vendor_password=%s
     """, (credential, pwd))
-    row = cur.fetchone(); cur.close()
+    row = cur.fetchone()
+    cur.close()
     if row:
         return "vendor", {"id": row["id"], "firstname": row["firstName"], "surname": row["lastName"],
                           "email": row["email"], "phone": row["phone"]}
@@ -354,8 +366,7 @@ def add_customer(form):
 
 
 def login(credential: str, password_plain: str):
-
-    return check_for_user(credential, password_plain)  
+    return check_for_user(credential, password_plain)
 
 def register(email: str, phone: str, password_plain: str, first: str, last: str, role: str = "customer") -> int:
     cur = mysql.connection.cursor()
@@ -373,20 +384,23 @@ def register(email: str, phone: str, password_plain: str, first: str, last: str,
             VALUES (%s,%s,%s,%s,%s,NULL)
         """, (email, phone, pw, first, last))
         new_id = cur.lastrowid
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
     return new_id
 
 
 def subscribe_to_newsletter(customer_id: int, subscribed: bool = True) -> None:
     cur = mysql.connection.cursor()
     cur.execute("UPDATE customers SET newsletterSubscription=%s WHERE customer_id=%s;", (1 if subscribed else 0, customer_id))
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
 
 def deleteUser(role: str, user_id: int) -> None:
     table = "customers" if role == "customer" else "vendors"
     cur = mysql.connection.cursor()
     cur.execute(f"DELETE FROM {table} WHERE {role}_id=%s;", (user_id,))
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
 
 
 # Orders
@@ -448,7 +462,8 @@ def view_orders(customer_id: int) -> list[dict]:
         WHERE o.customer_id=%s
         ORDER BY o.orderDate DESC
     """, (customer_id,))
-    rows = cur.fetchall(); cur.close()
+    rows = cur.fetchall()
+    cur.close()
     return rows
 
 def calculate_totals(order_id: int) -> str:
@@ -457,7 +472,8 @@ def calculate_totals(order_id: int) -> str:
         SELECT COALESCE(SUM(oi.unitPrice * oi.quantity * COALESCE(oi.rentalDuration,1)),0) AS total
         FROM order_item oi WHERE oi.order_id=%s
     """, (order_id,))
-    r = cur.fetchone(); cur.close()
+    r = cur.fetchone()
+    cur.close()
     return str(r["total"] or 0)
 
 def submit_order(cart_id: int, customer_id: int, billingAddressID: int | None, deliveryAddressID: int | None) -> int:
@@ -481,13 +497,15 @@ def submit_order(cart_id: int, customer_id: int, billingAddressID: int | None, d
 
     # Mark cart converted
     cur.execute("UPDATE carts SET cart_status='Converted' WHERE cart_id=%s;", (cart_id,))
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
     return order_id
 
 def confirm_payment(order_id: int) -> None:
     cur = mysql.connection.cursor()
     cur.execute("UPDATE orders SET orderStatus='Confirmed' WHERE order_id=%s;", (order_id,))
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
 
 
 
@@ -534,30 +552,35 @@ def get_latest_artworks(limit: Optional[int] = 12, category_id: Optional[int] = 
 def publish_artwork(artwork_id: int) -> None:
     cur = mysql.connection.cursor()
     cur.execute("UPDATE artworks SET availabilityStatus='Listed' WHERE artwork_id=%s;", (artwork_id,))
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
 
 def delete_artwork(artwork_id: int, vendor_id: int) -> None:
     cur = mysql.connection.cursor()
     cur.execute("DELETE FROM artworks WHERE artwork_id=%s AND vendor_id=%s;", (artwork_id, vendor_id,))
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
 
 def update_artwork_details(artwork_id: int, patch: dict) -> None:
     allowed = {"title","itemDescription","pricePerWeek","imageLink","availabilityStartDate","availabilityEndDate","maxQuantity","category_id"}
     sets, params = [], []
     for k, v in patch.items():
         if k in allowed:
-            sets.append(f"{k}=%s"); params.append(v)
+            sets.append(f"{k}=%s")
+            params.append(v)
     if not sets:
         return
     params.append(artwork_id)
     cur = mysql.connection.cursor()
     cur.execute(f"UPDATE artworks SET {', '.join(sets)} WHERE artwork_id=%s;", tuple(params))
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
 
 def archive_artwork(artwork_id: int) -> None:
     cur = mysql.connection.cursor()
     cur.execute("UPDATE artworks SET availabilityStatus='Unlisted' WHERE artwork_id=%s;", (artwork_id,))
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
 
 def generate_kpi(vendor_id: int) -> dict:
     cur = mysql.connection.cursor()
@@ -602,7 +625,8 @@ def generate_kpi(vendor_id: int) -> dict:
 def select_default_address(customer_id: int, address_id: int) -> None:
     cur = mysql.connection.cursor()
     cur.execute("UPDATE customers SET address_id=%s WHERE customer_id=%s;", (address_id, customer_id))
-    mysql.connection.commit(); cur.close()
+    mysql.connection.commit()
+    cur.close()
 
 
 
@@ -615,7 +639,8 @@ def ensure_address(
     country: Optional[str] = None,
 ) -> int:
     country = (country or "Australia").strip()
-    p = lambda s: (s or "").strip().lower()
+    def p(value: str | None) -> str:
+        return (value or "").strip().lower()
 
     cur = mysql.connection.cursor()
     cur.execute("""
